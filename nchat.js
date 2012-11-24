@@ -2,9 +2,9 @@
 var jade    = require('jade'),
 
     msg_tpl = jade.compile('<li class="msg" id="#{id}" style="color:#{color}">'
-                           + '<time>[#{hh}:#{mm}:#{ss}] '
+                           + '<time>[#{hh}:#{mm}:#{ss}]&nbsp;'
                            + '<span class="user">'
-                           + '#{username}</span>&nbsp;: #{msg}</li>'),
+                           + '#{username}</span>&nbsp;:&nbsp;#{msg}</li>'),
 
     re_noalphanumerics = /[^a-z0-9]/gi,
 

@@ -1,9 +1,9 @@
-(function(){
+(function(doc) {
 
     var socket = io.connect( document.location.origin ),
 
-        msgs   = document.getElementById('chat-msgs'),
-        newmsg = document.getElementById('new-msg'),
+        msgs   = doc.getElementById('chat-msgs'),
+        newmsg = doc.getElementById('new-msg'),
 
         username = prompt("Username");
 
@@ -39,7 +39,9 @@
     var receive_msg = function(data, is_me) {
         msgs.innerHTML += data.html;
         if (is_me)
-            document.querySelector('#m_'+data.id+' .user').className += ' me';
+            doc.querySelector('#m_'+data.id+' .user').className += ' me';
+
+        msgs.scrollTop = msgs.scrollHeight;
     };
 
     socket.on( 'msg-ok', function(data) {
@@ -64,4 +66,4 @@
 
     newmsg.focus();
 
-})();
+})(document);
