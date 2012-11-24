@@ -1,0 +1,31 @@
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.me {
+    font-weight:bold;
+}
+
+.container {
+    -webkit-border-radius: 5px;
+       -moz-border-radius: 5px;
+        -ms-border-radius: 5px;
+         -o-border-radius: 5px;
+            border-radius: 5px;
+
+    border: 1px solid #CCC;
+    
+}
+
+#chat-msgs {
+    list-style-type:none;
+    padding:5px 10px;
+
+    min-height:200px;
+}
+
+#new-msg {
+    border-top: 1px solid #CCC;
+    padding:5px 10px;
+    min-height:25px;
+}

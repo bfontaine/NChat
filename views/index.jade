@@ -1,0 +1,10 @@
+extends layout
+
+block content
+    h1#title= title
+    div.container
+      ol#chat-msgs
+      div(contenteditable,autofocus)#new-msg
+
+    script(src='/socket.io/socket.io.js')
+    script(src='/js/nchat-client.js')
