@@ -31,8 +31,10 @@ app.configure('development', function(){
 
 app.get('/', routes.index);
 
-var usernames = {},
+var usernames = {}, u,
     msgs_id   = 0,
+
+    connected_users = {},
 
     server    = http.createServer( app ),
     io        = require( 'socket.io' ).listen( server );
@@ -43,31 +45,57 @@ io.enable('browser client minification');
 
 io.sockets.on( 'connection', function(socket) {
 
+    var known_user  = false,
+        remote_addr = socket.handshake.address.address;
+
+    // looking for an existent username
+    for (u in usernames) {
+        if (!usernames.hasOwnProperty(u))
+            continue;
+
+        if (usernames[u] === remote_addr) {
+            connected_users[u] = true;
+            socket.emit( 'username-lookup', { username: u });
+            known_user = true;
+            break;
+        }
+    }
+
+    if (!known_user) {
+        socket.emit( 'username-lookup', { username: false });
+    }
+
     socket.on( 'registration', function(data) {
 
-        if (!data || !data.username) {
+        socket.volatile.emit( 'progression', { text: 'Checking username…' });
+
+        if (!data || !data.username || !nchat.validUsername( data.username )) {
             socket.emit( 'registration-fail', { text: "No username provided." } );
+            return;
         }
-        else if (usernames[data.username]) {
-            socket.get('username', function (err, username) {
-                
-                if (err || username !== data.username)
-                    socket.emit( 'registration-fail', { text: "Bad username." } );
-                else
-                    socket.emit( 'registration-ok', { username: username } );
-            });
+
+        var u = data.username;
+
+        socket.volatile.emit( 'progression', { text: 'Username OK' });
+
+        if (usernames[u]) {
+
+            socket.volatile.emit( 'progression', { text: 'Username found.' });
+
+            if (usernames[u] === remote_addr) {
+                socket.emit( 'registration-ok',   { username: u } );
+            } else {
+                socket.emit( 'registration-fail', { text: "Bad username." } );
+            }
         }
         else {
-            socket.set('username', data.username, function() {
 
-                if (!nchat.validUsername( data.username )) {
-                    socket.emit( 'registration-fail', { text: "Bad username." } );
-                    return;
-                }
+            socket.volatile.emit( 'progression', { text: 'Registering username' });
 
-
-                usernames[data.username] = 1;
-                socket.emit( 'registration-ok', { username: data.username } );
+            usernames[u] = remote_addr;
+            socket.set('username', u, function() {
+                connected_users[u] = true;
+                socket.emit( 'registration-ok', { username: u } );
             });
         }
 
@@ -86,7 +114,16 @@ io.sockets.on( 'connection', function(socket) {
 
                 else {
 
-                    var html = nchat.makeHTML(username, data.text, ++msgs_id);
+                    var msg = data.text, cmd_result;
+
+                    if (msg.charAt(0) === '/' && cmd_result = nchat.processCmd(msg)) {
+
+                        socket.emit( 'cmd-ok', { result: cmd_result });
+
+                        return;
+                    }
+
+                    var html = nchat.makeHTML(username, msg, ++msgs_id);
                     
                     socket.emit( 'msg-ok', { html: html, id: msgs_id } );
                     socket.broadcast.emit( 'new-msg', { html: html, id: msgs_id } );
@@ -101,7 +138,7 @@ io.sockets.on( 'connection', function(socket) {
     socket.on( 'disconnect', function() {
         socket.get('username', function(err, username) {
             if (!err) {
-                delete usernames[username];
+                delete connected_users[username];
             }
         });
     })

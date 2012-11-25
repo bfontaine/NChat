@@ -5,7 +5,13 @@
         msgs   = doc.getElementById('chat-msgs'),
         newmsg = doc.getElementById('new-msg'),
 
-        username = prompt("Username");
+        title  = document.title;
+
+    function progression(text) {
+
+        document.title = !text ? title : title + ' | ' + text;
+
+    }
 
     function send_msg() {
         var msg = newmsg.innerHTML.trim();
@@ -32,7 +38,10 @@
         }
     }
 
+    toggleNewMsg(false);
+
     socket.on( 'registration-ok', function(data) {
+        progression();
         toggleNewMsg(true);
     });
 
@@ -51,19 +60,39 @@
     socket.on( 'new-msg', receive_msg);
 
     socket.on( 'registration-fail', function(data) {
-        username = prompt(data.text+" Choose an username");
         socket.emit( 'registration', {
-            username: username
+            username: prompt(data.text+" Choose an username")
         });
     })
     socket.on( 'msg-fail', function(data) {
         console.log(data);
     })
 
-    socket.emit( 'registration', {
-        username: username
+    socket.on( 'username-lookup', function(data) {
+        if (data.username) {
+            progression();
+            toggleNewMsg(true);
+        newmsg.focus();
+        }
+        else {
+
+            socket.emit( 'registration', {
+                username: prompt("Choose an username")
+            });
+
+        }
     });
 
-    newmsg.focus();
+    socket.on( 'registration-ok', function(){
+
+        progression();
+        toggleNewMsg(true);
+        newmsg.focus();
+
+    });
+
+    socket.on( 'progression', function(data) {
+        progression(data.text);
+    });
 
 })(document);
