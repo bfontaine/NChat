@@ -82,7 +82,6 @@
         });
     })
     socket.on( 'msg-fail', function(data) {
-        console.log(data);
         if (/no registered username/i.test(data)) {
             socket.emit( 'registration', {
                 username: prompt(data.text+" Choose an username")
@@ -131,8 +130,6 @@
     document.addEventListener( visibility[1]+'visibilitychange', function() {
 
         msgs_count = 0;
-
-        console.log(document[visibility[0]]);
 
         if (!document[visibility[0]]) {
             Tinycon.reset();
