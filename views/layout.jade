@@ -1,8 +1,10 @@
 doctype 5
-html
+html(lang='en', dir='ltr')
   head
+    meta(charset='utf-8')
+    meta(name='language', content='en')
     title= title
     link(rel='icon', type='image/ico', href='/favicon.ico')
-    link(rel='stylesheet', href='/stylesheets/style.css')
+    link(rel='stylesheet', href='/stylesheets/style.min.css')
   body
     block content
