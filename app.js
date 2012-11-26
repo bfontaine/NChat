@@ -43,25 +43,30 @@ server.listen( app.get( 'port' ) );
 
 io.enable('browser client minification');
 
-io.sockets.on( 'connection', function(socket) {
+function username_exists_for( remote_addr ) {
 
-    var known_user  = false,
-        remote_addr = socket.handshake.address.address;
-
-    // looking for an existent username
     for (u in usernames) {
         if (!usernames.hasOwnProperty(u))
             continue;
 
         if (usernames[u] === remote_addr) {
             connected_users[u] = true;
-            socket.emit( 'username-lookup', { username: u });
-            known_user = true;
-            break;
+            return u;
         }
     }
 
-    if (!known_user) {
+    return false;
+}
+
+io.sockets.on( 'connection', function(socket) {
+
+    var remote_addr = socket.handshake.address.address;
+
+    // looking for an existent username
+    if (username_exists_for( remote_addr )) {
+        socket.emit( 'username-lookup', { username: u });
+    }
+    else {
         socket.emit( 'username-lookup', { username: false });
     }
 
@@ -109,26 +114,36 @@ io.sockets.on( 'connection', function(socket) {
         else {
             socket.get('username', function(err, username) {
 
-                if (err)
-                    socket.emit( 'msg-fail', { text: "No registered username." } );
+                if (   (err === null)
+                    && (username === null)
+                    && (username = username_exists_for( remote_addr ))) {
 
-                else {
-
-                    var msg = data.text, cmd_result;
-
-                    if (msg.charAt(0) === '/' && cmd_result = nchat.processCmd(msg)) {
-
-                        socket.emit( 'cmd-ok', { result: cmd_result });
-
-                        return;
-                    }
-
-                    var html = nchat.makeHTML(username, msg, ++msgs_id);
-                    
-                    socket.emit( 'msg-ok', { html: html, id: msgs_id } );
-                    socket.broadcast.emit( 'new-msg', { html: html, id: msgs_id } );
-
+                    socket.set( 'username', username);
                 }
+
+                else if (err)
+                    return socket.emit( 'msg-fail', { text: "No registered username." } );
+
+                var msg = data.text, cmd_result;
+
+                if (msg.charAt(0) === '/') {
+
+                    cmd_result = nchat.processCmd(msg, {
+                        username:    username,
+                        remote_addr: remote_addr,
+                        users: connected_users
+                    });
+
+                    if (cmd_result)
+                        socket.emit( 'cmd-ok', { html: cmd_result, id: ++msgs_id });
+
+                    return;
+                }
+
+                var html = nchat.makeHTML(username, msg, ++msgs_id);
+                
+                socket.emit( 'msg-ok', { html: html, id: msgs_id } );
+                socket.broadcast.emit( 'new-msg', { html: html, id: msgs_id } );
 
             });
         }

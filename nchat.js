@@ -8,10 +8,14 @@ var jade    = require('jade'),
 
     re_noalphanumerics = /[^a-z0-9]/gi,
 
+    re_spaces = /\s/g,
+
+    re_username = /^[a-z][-.@\w]+$/i,
+
     usernames_colors = {};
 
 
-function makeHTML( username, msg, id ) {
+function makeHTML( username, msg, id , color) {
 
     var now = new Date(),
         hh  = now.getHours(),
@@ -32,7 +36,7 @@ function makeHTML( username, msg, id ) {
         msg: msg,
         id: 'm_' + id,
 
-        color: colorUsername( username )
+        color: color ? color : colorUsername( username )
 
     });
 
@@ -65,8 +69,40 @@ function colorUsername( username ) {
 function validUsername( username ) {
     var u = username.trim();
 
-    return u.length > 2 && u.length < 15;
+    return u.length > 2 && u.length < 15 && re_username.test(username);
+}
+
+function executeCmd( cmd, args, infos ) {
+
+    switch(cmd) {
+
+        // all commands are defined here
+
+        case '/me':
+            return 'Username: ' + infos.username
+                    + ', IP: ' + infos.remote_addr + '.';
+
+        case '/list':
+            return 'Connected users: '
+                        + Object.keys(infos.users).join(', ') + '.';
+
+    }
+
+
+    return null;
+}
+
+// commands; return HTML
+function processCmd( cmd, infos ) {
+
+    var words = cmd.split(re_spaces),
+
+        result = executeCmd(words[0], words.slice(1), infos);
+
+
+    return result ? makeHTML( '<command>', result, '_', '#888') : false;
 }
 
 exports.makeHTML      = makeHTML;
 exports.validUsername = validUsername;
+exports.processCmd    = processCmd;
