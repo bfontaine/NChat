@@ -60,7 +60,7 @@ function username_exists_for( remote_addr ) {
 
 io.sockets.on( 'connection', function(socket) {
 
-    var remote_addr = socket.handshake.address.address;
+    var remote_addr = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address.address;
 
     // looking for an existent username
     if (username_exists_for( remote_addr )) {
