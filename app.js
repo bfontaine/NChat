@@ -134,10 +134,10 @@ io.sockets.on( 'connection', function(socket) {
                         users: connected_users
                     });
 
-                    if (cmd_result)
+                    if (cmd_result) {
                         socket.emit( 'cmd-ok', { html: cmd_result, id: ++msgs_id });
-
-                    return;
+                        return;
+                    }
                 }
 
                 var html = nchat.makeHTML(username, msg, ++msgs_id);
